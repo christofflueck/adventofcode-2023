@@ -28,15 +28,13 @@ def part_b(data):
     to_process = [1 for _ in rows]
 
     for index, value in enumerate(rows):
-        # TODO only evaluate each row once
-        for _ in range(to_process[index]):
-            winning, card = value
-            matches = card_matching(winning, card)
-            if matches == 0:
-                continue
-            for copy_index in range(matches):
-                if len(to_process)  > (index + copy_index + 1):
-                    to_process[index + copy_index + 1] += 1
+        winning, card = value
+        matches = card_matching(winning, card)
+        if matches == 0:
+            continue
+        for copy_index in range(matches):
+            if len(to_process) > (index + copy_index + 1):
+                to_process[index + copy_index + 1] += to_process[index]
 
     return sum(to_process)
 
