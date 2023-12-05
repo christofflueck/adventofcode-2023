@@ -1,3 +1,5 @@
+from typing import List, Tuple
+
 from run_util import run_puzzle
 from tqdm import tqdm
 
@@ -18,14 +20,16 @@ def parse_lookups(rows):
     row_num = extract_next_rows(row_num, rows, light_to_temperature)
     row_num = extract_next_rows(row_num, rows, temperature_to_humidity)
     extract_next_rows(row_num, rows, humidity_to_location)
+
+    # Sort the data so the ranges don't need to be searched multiple times but can be done in sequence
     lookups = [
-        seed_to_soil,
-        soil_to_fertilizer,
-        fertilizer_to_water,
-        water_to_light,
-        light_to_temperature,
-        temperature_to_humidity,
-        humidity_to_location,
+        sorted(seed_to_soil),
+        sorted(soil_to_fertilizer),
+        sorted(fertilizer_to_water),
+        sorted(water_to_light),
+        sorted(light_to_temperature),
+        sorted(temperature_to_humidity),
+        sorted(humidity_to_location),
     ]
     return lookups
 
@@ -35,48 +39,74 @@ def extract_next_rows(row_num, rows, range_map):
         dest_start, source_start, range_len = [int(x) for x in rows[row_num].split(' ')]
         range_map.append((source_start, source_start + range_len, dest_start - source_start))
         row_num += 1
+
     return row_num + 1
 
 
 def part_a(data):
     rows = [row for row in data.split('\n') if row != '']
-    seeds = [int(x) for x in rows[0].split(': ')[1].split(' ')]
+    seeds = [(int(x), int(x)) for x in rows[0].split(': ')[1].split(' ')]
     lookups = parse_lookups(rows)
 
-    locations = []
+    locations = get_seed_location(lookups, seeds)
 
-    for seed in seeds:
-        locations.append(get_seed_location(lookups, seed))
-
-    return min(locations)
+    return min([x[0] for x in locations])
 
 
-def get_seed_location(lookups, seed):
-    curr_num = seed
+def get_seed_location(lookups, seeds: List[Tuple[int, int]]):
+    out = []
+    current = seeds
+    # iterate over all lookups
     for lookup in lookups:
-        for src_start, src_end, dest in lookup:
-            if src_start <= curr_num <= src_end:
-                curr_num += dest
-                break
-    return curr_num
+        resolved = []
+        # We will have multiple ranges so we iterate them one by one
+        while len(current) > 0:
+            seed_start, seed_end = current.pop()
+            # For each mapping in that conversion
+            for src_start, src_end, diff in lookup:
+                # Fully in range
+                if src_start <= seed_start and seed_end <= src_end:
+                    resolved.append((seed_start + diff, seed_end + diff))
+                    seed_start = 0
+                    seed_end = 0
+                    break
+
+                # overlapping start
+                if src_start <= seed_start < src_end < seed_end:
+                    resolved.append((seed_start + diff, src_end + diff))
+                    seed_start = src_end
+                    current.append((seed_start, seed_end))
+
+                # seed envelops the range
+                if seed_start < src_start < src_end < seed_end:
+                    resolved.append((src_start + diff, seed_end + diff))
+                    seed_end = src_start - 1
+                    current.append((seed_start, seed_end))
+
+                # I feel like I'm missing a case here seed_start < src_start < seed_end <= seed_start but it works
+
+            # fallback for no mapping available
+            if seed_start > 0 and seed_end > 0:
+                resolved.append((seed_start, seed_end))
+
+        # Provide the current solutions to the next lookup or the output
+        current = resolved
+
+    return current
 
 
 def part_b(data):
     rows = [row for row in data.split('\n') if row != '']
     seed_range_def = [int(x) for x in rows[0].split(': ')[1].split(' ')]
-    seed_ranges = []
-    for i in range(len(seed_range_def) // 2):
-        seed_ranges.append(range(seed_range_def[i * 2], seed_range_def[i * 2] + seed_range_def[(i * 2) + 1]))
+    seed_ranges = [(seed_range_def[i], seed_range_def[i] + seed_range_def[i + 1] - 1) for i in
+                   range(0, len(seed_range_def), 2)]
 
     lookups = parse_lookups(rows)
 
-    locations = []
+    locations = get_seed_location(lookups, seed_ranges)
 
-    for seed_range in tqdm(seed_ranges, 'ranges'):
-        for seed in tqdm(seed_range, 'current range'):
-            locations.append(get_seed_location(lookups, seed))
-
-    return min(locations)
+    range_starts = [x[0] for x in locations]
+    return min(range_starts)
 
 
 def main():
