@@ -18,7 +18,7 @@ def get_number_of_winning_races(races):
     leeways = []
     for time, distance in races:
         possible = 0
-        for windup_and_speed in tqdm(range(0, time)):
+        for windup_and_speed in range(1, time - 1):
             max_distance = (time - windup_and_speed) * windup_and_speed
             if max_distance > distance:
                 possible += 1
