@@ -4,7 +4,7 @@ import time
 
 from aocd import get_data, submit
 
-days_solved = 25
+days_solved = 11
 
 from multiprocessing import Pool
 
@@ -47,7 +47,7 @@ def main():
             duration /= 1E6
         print(f'{title}: {duration} ms')
 
-    print(f'solved all {days_solved} days in {(end - start) / 1E6} ms')
+    print(f'solved all {days_solved} days in {(end - start) / 1E6} ms, sum of parts {sum(timing for _, timing in results)/1E6} ms')
 
 
 if __name__ == '__main__':
