@@ -24,10 +24,8 @@ def parse_data(added_distance, data):
     empty_rows = [i for i, x in enumerate(galaxies) if len(x) == 0]
     empty_columns = [i for i in range(len(str_rows[0])) if all([i not in row for row in galaxies])]
     expanded_galaxies = []
-    non_expanded_galaxies = []
     for y, row in enumerate(galaxies):
         for x in row:
-            non_expanded_galaxies.append((x, y))
             expanded_y = y + sum([added_distance for expanded_row in empty_rows if expanded_row < y])
             expanded_x = x + sum([added_distance for expanded_col in empty_columns if expanded_col < x])
             expanded_galaxies.append((expanded_x,
