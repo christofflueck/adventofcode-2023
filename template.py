@@ -2,12 +2,12 @@ from run_util import run_puzzle
 
 
 def part_a(data: str) -> int:
-    rows = [int(x) for x in data.split(',')]
+    rows = [int(x) for x in data.split('\n')]
     return 0
 
 
 def part_b(data: str) -> int:
-    rows = [int(x) for x in data.split(',')]
+    rows = [int(x) for x in data.split('\n')]
     return 0
 
 
