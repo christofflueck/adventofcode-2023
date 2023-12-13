@@ -23,39 +23,75 @@ def part_a(data: str) -> int:
     lefts = []
     aboves = []
     for cols, rows in patterns:
-        prev = -1
+        left_mirror = count_mirrors(cols, False)
+        if left_mirror:
+            lefts.append(left_mirror)
+        above_mirror = count_mirrors(rows, False)
+        if above_mirror:
+            aboves.append(above_mirror)
 
-        for i, col in enumerate(cols):
-            if col == prev:
-                lefts.append(i - 1)
-                break
+    return sum(lefts) + sum(aboves * 100)
+
+
+def count_mirrors(cols, smudge):
+    prev = -9999
+    for i, col in enumerate(cols):
+        if i == 0:
             prev = col
+            continue
+        left = prev
+        right = col
 
-    return 0
+        success = False
+        counter = 0
+        smudge_counter = 0
+        while left == right or (smudge and bin(left ^ right).count('1') == 1):
+            counter += 1
+            if bin(left ^ right).count('1') == 1:
+                smudge_counter += 1
+            if i - counter > 0 and i + counter < len(cols):
+                left = cols[i - counter - 1]
+                right = cols[i + counter]
+            else:
+                success = True
+                break
+
+        if success and (not smudge or smudge_counter == 1):
+            return i
+        prev = col
 
 
 def part_b(data: str) -> int:
-    data = parse_data(data)
-    return 0
+    patterns = parse_data(data)
+
+    lefts = []
+    aboves = []
+    for cols, rows in patterns:
+        left_mirror = count_mirrors(cols, True)
+        if left_mirror:
+            lefts.append(left_mirror)
+        above_mirror = count_mirrors(rows, True)
+        if above_mirror:
+            aboves.append(above_mirror)
+        if not left_mirror and not above_mirror:
+            print('No match found')
+
+    return sum(lefts) + sum(aboves * 100)
 
 
 def main():
     examples = [
-        ("""#.##..##.
-..#.##.#.
-##......#
-##......#
-..#.##.#.
-..##..##.
-#.#.##.#.
-
-#...##..#
-#....#..#
-..##..###
-#####.##.
-#####.##.
-..##..###
-#....#..#""", 405, 1)
+        ("""..#..##..#..#...#
+#.#..##.#....#.##
+##.#...###..###..
+##...#..##..##..#
+#.###.##.####.##.
+###...##..##..##.
+######..######..#
+######..######..#
+###...##..##..##.
+#.###.##.####.##.
+##...#..##..##..#""", None, 11)
     ]
     day = int(__file__.split('/')[-1].split('.')[0][-2:])
     run_puzzle(day, part_a, part_b, examples)
