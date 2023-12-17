@@ -1,43 +1,44 @@
-import functools
-
 from tqdm import tqdm
 
 from run_util import run_puzzle
-import numpy as np
+
+
+def turn_left(data):
+    return tuple(["".join([data[row][len(data) - 1 - col] for row in range(len(data))]) for col in range(len(data))])
+
+
+def turn_right(data):
+    return tuple(["".join([data[len(data) - 1 - row][col] for row in range(len(data))]) for col in range(len(data))])
+
+
+def print_correct_way_up(data, times_turned):
+    print_data = data
+    print("TURNED", times_turned)
+    for _ in range((times_turned + 1) % 4):
+        print_data = turn_left(print_data)
+    for row in print_data:
+        print(row)
 
 
 def parse_data(data: str):
-    return [list(row) for row in data.split('\n')]
+    split = data.split('\n')
+    return turn_left(split)
 
 
-def compare_values(a: str, b: str):
-    if a == b or a == '#' or b == '#':
-        return 0
-    if a == 'O' and b == '.':
-        return -1
-    if a == '.' and b == 'O':
-        return 1
-    print('missing case for', a, b)
+def tilt_left(data):
+    for _ in range(len(data[0])):
+        data = [row.replace('.O', 'O.') for row in data]
+    return tuple(data)
 
 
 def part_a(data: str) -> int:
     data = parse_data(data)
 
-    # current orientation = up is on up
-    data = np.rot90(data, k=1)
-    # current orientation = up is on the left
-
-    for i in range(len(data)):
-        str_row = "#".join(["".join(sorted(segment, reverse=True)) for segment in "".join(data[i]).split('#')])
-        data[i] = np.array(list(str_row))
-
-    # current orientation = up is on up
-    data = np.rot90(data, k=3)
-
+    data = tilt_left(data)
 
     load = 0
-    for x, row in enumerate(data):
-        load += (row == 'O').sum() * (len(data) - x)
+    for x in range(len(data[0])):
+        load += [row[x] for y, row in enumerate(data)].count('O') * (len(data) - x)
 
     return load
 
@@ -45,36 +46,26 @@ def part_a(data: str) -> int:
 def part_b(data: str) -> int:
     data = parse_data(data)
 
-    for row in data:
-        print("".join(row))
-    print('---------------------')
-    # current orientation = up is on up
-    data = np.rot90(data, k=1)
-    # current orientation = up is on the left
+    lookup = {}
+    reverse = {}
+    cycle = 0
 
-    indexes = {}
-    grids = {}
+    for cycle in range(1000000000):
+        reverse[cycle] = data
 
-    repeated_on = 0
-
-    for cycle in tqdm(range(1000000000)):
-        data = np.rot90(data, k=3)
-        if data.tobytes() in indexes:
-            repeated_on = cycle
-            print('FOUND REPEAT AT', cycle)
-            break
+        if data not in lookup:
+            lookup[data] = cycle
         else:
-            grids[data.tobytes()] = cycle
-        for i in range(len(data)):
-            str_row = "#".join(["".join(sorted(segment, reverse=True)) for segment in "".join(data[i]).split('#')])
-            data[i] = np.array(list(str_row))
+            break
 
-    # current orientation = up is on up
-    data = np.rot90(data, k=3)
+        for i in range(4):
+            data = turn_right(tilt_left(data))
 
+    diff = (1000000000 - lookup[data]) % (cycle - lookup[data])
+    data = reverse[lookup[data] + diff]
     load = 0
-    for x, row in enumerate(data):
-        load += (row == 'O').sum() * (len(data) - x)
+    for x in range(len(data[0])):
+        load += [row[x] for y, row in enumerate(data)].count('O') * (len(data) - x)
 
     return load
 

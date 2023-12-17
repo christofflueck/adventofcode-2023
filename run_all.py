@@ -4,7 +4,7 @@ import time
 
 from aocd import get_data, submit
 
-days_solved = 11
+days_solved = 14
 
 from multiprocessing import Pool
 
@@ -12,6 +12,9 @@ from multiprocessing import Pool
 def solve_day_part(day_and_part):
     day, part = day_and_part
     title = f'day {day} - part {part}'
+
+    if day == 12:
+        return title, 0
 
     if day == 25 and part != 'a':
         return title, None
