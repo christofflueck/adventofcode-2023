@@ -53,13 +53,10 @@ def part_a(data: str) -> int:
     workflows, parts = parse_data(data)
 
     accepted = []
-    rejected = []
 
     for part in parts:
         if run_workflows(part, workflows):
             accepted.append(part)
-        else:
-            rejected.append(part)
 
     return sum([sum(part.values()) for part in accepted])
 
@@ -68,7 +65,6 @@ def part_b(data: str) -> int:
     workflows, parts = parse_data(data)
 
     accepted = []
-    rejected = []
     all_parts = [({
                       "x": (1, 4000),
                       "m": (1, 4000),
@@ -82,7 +78,6 @@ def part_b(data: str) -> int:
             accepted.append(part)
             continue
         if next_workflow == 'R':
-            rejected.append(part)
             continue
         workflow = workflows[next_workflow]
         for test in workflow:
