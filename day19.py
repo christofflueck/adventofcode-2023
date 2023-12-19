@@ -67,10 +67,61 @@ def part_a(data: str) -> int:
 def part_b(data: str) -> int:
     workflows, parts = parse_data(data)
 
-    possible_paths = []
+    accepted = []
+    rejected = []
+    all_parts = [({
+                      "x": (1, 4000),
+                      "m": (1, 4000),
+                      "a": (1, 4000),
+                      "s": (1, 4000),
+                  }, "in")]
 
-
-    return 0
+    while all_parts:
+        part, next_workflow = all_parts.pop()
+        if next_workflow == 'A':
+            accepted.append(part)
+            continue
+        if next_workflow == 'R':
+            rejected.append(part)
+            continue
+        workflow = workflows[next_workflow]
+        for test in workflow:
+            if isinstance(test, str):
+                all_parts.append((part, test))
+                break
+            prop, check, value, target = test
+            part_min, part_max = part[prop]
+            if part_min <= value < part_max:
+                true_part = part.copy()
+                false_part = part.copy()
+                if check == '>':
+                    true_part[prop] = (value + 1, part_max)
+                    false_part[prop] = (part_min, value)
+                else:
+                    true_part[prop] = (part_min, value - 1)
+                    false_part[prop] = (value, part_max)
+                part = false_part
+                all_parts.append((true_part, target))
+                continue
+            if value <= part_min:
+                if check == '>':
+                    all_parts.append((part, target))
+                    break
+                else:
+                    continue
+            if value >= part_max:
+                if check == '<':
+                    all_parts.append((part, target))
+                    break
+                else:
+                    continue
+    accepted_parts_sum = 0
+    for part in accepted:
+        accepted_parts_val = 1
+        for part_min, part_max in part.values():
+            accepted_parts_val *= part_max - part_min + 1
+        accepted_parts_sum += accepted_parts_val
+    return accepted_parts_sum
 
 
 def main():
@@ -91,7 +142,7 @@ hdj{m>838:A,pv}
 {x=1679,m=44,a=2067,s=496}
 {x=2036,m=264,a=79,s=2244}
 {x=2461,m=1339,a=466,s=291}
-{x=2127,m=1623,a=2188,s=1013}""", 19114, 1)
+{x=2127,m=1623,a=2188,s=1013}""", 19114, 167409079868000)
     ]
     day = int(__file__.split('/')[-1].split('.')[0][-2:])
     run_puzzle(day, part_a, part_b, examples)
