@@ -16,7 +16,7 @@ def parse_data(data: str):
 
         bricks.append([positions, int(sz), int(ez)])
 
-    bricks.sort(key=lambda brick: brick[1])
+    bricks.sort(key=lambda brick: brick[2])
 
     return bricks
 
@@ -26,6 +26,8 @@ def part_a(data: str) -> int:
     original_bricks = parse_data(data)
     above_bricks = defaultdict(lambda: set())
     below_bricks = defaultdict(lambda: set())
+
+    # Loop over the already sorted bricks
     for index, brick in enumerate(bricks):
         positions, sz, ez = brick
 
