@@ -16,6 +16,7 @@ def parse_data(data: str):
 
         bricks.append([positions, int(sz), int(ez)])
 
+    # Sort by the end Z position
     bricks.sort(key=lambda brick: brick[2])
 
     return bricks
@@ -31,39 +32,58 @@ def part_a(data: str) -> int:
     for index, brick in enumerate(bricks):
         positions, sz, ez = brick
 
-        new_sz = None
+        new_ez = None
 
         on_bricks = set()
+        # Check all bricks below
         for lower in range(index - 1, -1, -1):
             other_positions, osz, esz = bricks[lower]
-            updated_sz = max(osz + 1, esz + 1)
+            updated_ez = esz + 1
 
-            if positions.intersection(other_positions) and (new_sz is None or updated_sz >= new_sz):
-                if new_sz is None or updated_sz < new_sz:
+            # if it overlaps or if we found a new higher z value
+            if positions.intersection(other_positions) and (new_ez is None or updated_ez >= new_ez):
+                # Store all bricks this relies on
+                if new_ez is None or updated_ez < new_ez:
+                    # Either we haven't found a position or we found a new one. Refresh the set
                     on_bricks = {lower}
-                elif updated_sz == new_sz:
+                elif updated_ez == new_ez:
+                    # Same height so add to this position
                     on_bricks.add(lower)
 
-                new_sz = updated_sz
+                new_ez = updated_ez
 
+        # Add this bricks to the list of bricks above the ones we're on
         for is_on in on_bricks:
             above_bricks[is_on].add(index)
+        # Set the bricks this sits on
         below_bricks[index] = on_bricks
-        if new_sz is None:
-            new_sz = 1
-        brick[1] = new_sz
-        brick[2] = new_sz + ez - sz
+        # No intersections found -> on the floor
+        if new_ez is None:
+            new_ez = 1
+        # Update the new z position of this brick
+        brick[1] = new_ez - ez + sz
+        brick[2] = new_ez
 
+    # Check which bricks we can and can't remove
     can_be_removed = set()
+    cannot_be_removed = set()
     for index in range(len(bricks)):
         provides_support_for = above_bricks[index]
+
+        # add it if it doesn't provide support for any bricks
         if len(provides_support_for) == 0:
             can_be_removed.add(index)
+
+        # If this sits on multiple bricks add all of them
         if len(below_bricks[index]) > 1:
             for brick in below_bricks[index]:
                 can_be_removed.add(brick)
 
-    return len(can_be_removed)
+        # Make sure it the support brick doesn't get removed when it's the only one
+        if len(below_bricks[index]) == 1:
+            cannot_be_removed.add(list(below_bricks[index])[0])
+
+    return len(can_be_removed - cannot_be_removed)
 
 
 def part_b(data: str) -> int:
