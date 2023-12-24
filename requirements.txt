@@ -2,3 +2,4 @@ advent-of-code-data
 parse
 tqdm
 numpy
+z3-solver

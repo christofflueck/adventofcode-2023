@@ -1,6 +1,6 @@
 from run_util import run_puzzle
 import re
-import numpy as np
+import z3
 
 
 def parse_data(data: str):
@@ -35,30 +35,6 @@ def intersect_2d(v1, v2):
 
     return x, y
 
-def collision_time(v1, v2):
-    px1, py1, pz1, vx1, vy1, vz1 = v1
-    px2, py2, pz2, vx2, vy2, vz2 = v2
-
-    #  s * vx1 - r * vx2 = px2 - px1
-    #  s * vy1 - r * vy2 = py2 - py1
-    #  s * vz1 - r * vz2 = pz2 - pz1
-    det_a = vx1 * (-vy2) - (-vx2) * vy1
-
-    if det_a == 0:
-        return None
-
-    r = ((px2 - px1) * (-vy2) - (py2 - py1) * (-vx2)) / det_a
-    s = (vx1 * (py2 - py1) - vy1 * (px2 - px1)) / det_a
-
-    if pz1 + r * vz1 != pz2 + s * vz2:
-        return None
-
-    # Only go forward
-    if (r < 0 or s < 0) and r != s:
-        return None
-
-    return r
-
 
 def part_a(data: str) -> int:
     stones = parse_data(data)
@@ -83,12 +59,27 @@ def part_a(data: str) -> int:
 def part_b(data: str) -> int:
     stones = parse_data(data)
 
-    throw = (24, 13, 10, -3, 1, 2)
-    i0 = collision_time(throw, stones[0])
-    i1 = collision_time(throw, stones[1])
-    i2 = collision_time(throw, stones[2])
+    x, y, z = z3.BitVecs("x y z", 64)
+    vx, vy, vz = z3.BitVecs("vx vy vz", 64)
 
-    return 0
+    solver = z3.Solver()
+
+    for index, stone in enumerate(stones[:3]):
+        t_index = z3.BitVec("t" + str(index), 64)
+        px, py, pz, pvx, pvy, pvz = stone
+        solver.add(t_index >= 0)
+        solver.add(x + t_index * vx == px + t_index * pvx)
+        solver.add(y + t_index * vy == py + t_index * pvy)
+        solver.add(z + t_index * vz == pz + t_index * pvz)
+
+    solver.check()
+    solution = solver.model()
+
+    val_x = solution[x].as_long()
+    val_y = solution[y].as_long()
+    val_z = solution[z].as_long()
+
+    return val_x + val_y + val_z
 
 
 def main():
@@ -97,7 +88,7 @@ def main():
 18, 19, 22 @ -1, -1, -2
 20, 25, 34 @ -2, -2, -4
 12, 31, 28 @ -1, -2, -1
-20, 19, 15 @  1, -5, -3""", 2, 47)
+20, 19, 15 @  1, -5, -3""", 2, None)
     ]
     day = int(__file__.split('/')[-1].split('.')[0][-2:])
     run_puzzle(day, part_a, part_b, examples)
